@@ -1,0 +1,46 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: qwwwwwwuwu/clinic
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+      - run: pip install -r requirements.txt
+      - run: make test
+
+  build-and-push:
+    needs: test  
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Логин в GitHub Container Registry
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Сборка и публикация
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ghcr.io/qwwwwwwuwu/clinic:latest
+            ghcr.io/qwwwwwwuwu/clinic:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.repository_url }}
