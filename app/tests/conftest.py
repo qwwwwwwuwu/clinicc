@@ -5,11 +5,10 @@ from app.database import Base
 import pytest
 import sys
 
-@pytest.hookimpl(hookwrapper=True)
-def pytest_sessionfinish(session, exitstatus):
-    sys.stdout.flush()
-    sys.stderr.flush()
-    yield
+@pytest.hookimpl(tryfirst=True)
+def pytest_load_initial_conftests(args):
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
 
 TEST_DATABASE_URL = "postgresql://test:test@localhost:5432/test"
 
