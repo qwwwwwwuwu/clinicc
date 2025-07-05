@@ -2,9 +2,16 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.database import Base
+import pytest
+import sys
 
+@pytest.hookimpl(hookwrapper=True)
+def pytest_sessionfinish(session, exitstatus):
+    sys.stdout.flush()
+    sys.stderr.flush()
+    yield
 
-TEST_DATABASE_URL = "postgresql://test:test@localhost/test"
+TEST_DATABASE_URL = "postgresql://test:test@localhost:5432/test"
 
 engine = create_engine(TEST_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

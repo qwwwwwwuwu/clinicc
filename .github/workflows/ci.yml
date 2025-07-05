@@ -37,8 +37,11 @@ jobs:
         pip install -r requirements.txt
         
     - name: Run tests
+      shell: pwsh
       run: |
-        pytest app/tests -v
+        $env:PYTHONUTF8 = "1"
+        python -c "import sys; print(sys.stdout.encoding)"
+        pytest -v --capture=tee-sysм
       env:
         TEST_DATABASE_URL: "postgresql://test:test@localhost/test"
 
@@ -66,3 +69,5 @@ jobs:
         tags: |
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+       

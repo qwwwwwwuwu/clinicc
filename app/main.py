@@ -1,5 +1,7 @@
 import os
 print(f"DATABASE_URL from env: {os.getenv('DATABASE_URL')}")
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
