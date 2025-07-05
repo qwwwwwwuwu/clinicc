@@ -1,4 +1,5 @@
-
+import os
+print(f"DATABASE_URL from env: {os.getenv('DATABASE_URL')}")
 
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
