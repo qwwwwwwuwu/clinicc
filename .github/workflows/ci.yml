@@ -73,4 +73,7 @@ jobs:
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-       
+    - name: Run typecheck
+      run: |
+        pip install mypy types-psycopg2-binary
+        mypy app       

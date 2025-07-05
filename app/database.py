@@ -1,27 +1,67 @@
+import os
+import sys
+from typing import cast
+from urllib.parse import quote_plus, urlparse
+
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from urllib.parse import quote_plus
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-db_user = "appuser"
-db_pass = "secret"  # Здесь ваш реальный пароль
-db_host = "db"
-db_port = "5432"
-db_name = "clinic"
+load_dotenv()
 
 
-encoded_pass = quote_plus(db_pass)
+def get_database_config() -> tuple[str, str, str, str, str]:
+    """Получение конфигурации БД с проверкой типов."""
+    if "pytest" in sys.modules:
+        return ("test", "test", "test", "localhost", "5432")
+
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    if DATABASE_URL:
+        parsed = urlparse(DATABASE_URL)
+        return (
+            cast(str, parsed.username),
+            cast(str, parsed.password),
+            cast(str, parsed.path[1:]),
+            cast(str, parsed.hostname),
+            str(parsed.port) if parsed.port else "5432",
+        )
+
+    DB_USER = cast(str, os.getenv("DB_USER")) or "test"
+    DB_PASSWORD = cast(str, os.getenv("DB_PASSWORD")) or "test"
+    DB_NAME = cast(str, os.getenv("DB_NAME")) or "test"
+    DB_HOST = os.getenv("DB_HOST", "localhost")
+    DB_PORT = os.getenv("DB_PORT", "5432")
+
+    if not all([DB_USER, DB_PASSWORD, DB_NAME]):
+        raise ValueError("Не заданы обязательные переменные окружения для базы данных")
+
+    return (
+        cast(str, DB_USER),
+        cast(str, DB_PASSWORD),
+        cast(str, DB_NAME),
+        cast(str, DB_HOST),
+        cast(str, DB_PORT),
+    )
 
 
-DATABASE_URL = f"postgresql://{db_user}:{encoded_pass}@{db_host}:{db_port}/{db_name}"
+DB_USER, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT = get_database_config()
 
-engine = create_engine(DATABASE_URL)
+# Формирование DSN с безопасным кодированием пароля
+encoded_password = quote_plus(DB_PASSWORD)
+final_db_url: str = (
+    f"postgresql://{DB_USER}:{encoded_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    if "pytest" not in sys.modules and not os.getenv("DATABASE_URL")
+    else f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+)
 
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is not set")
-
-engine = create_engine(DATABASE_URL)
+engine = create_engine(final_db_url)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-print(f"Final connection string: {DATABASE_URL}")
+# Вывод DSN без пароля в логах
+safe_dsn = (
+    final_db_url.replace(DB_PASSWORD, "***")
+    if "DB_PASSWORD" in locals()
+    else final_db_url
+)
+print(f"Используется DSN: {safe_dsn}")

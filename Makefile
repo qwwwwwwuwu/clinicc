@@ -1,4 +1,4 @@
-.PHONY: lint test run
+.PHONY: lint test run up down migrate
 
 lint:
     @echo "Running linters..."
@@ -22,3 +22,19 @@ clean:
 
 clean-imports:
     autoflake --remove-all-unused-imports --in-place app/*.py app/tests/*.py
+
+up:
+    @echo "Starting containers..."
+    @docker-compose up -d
+
+down:
+    @echo "Stopping containers..."
+    @docker-compose down
+
+migrate:
+    @echo "Applying database migrations..."
+    @docker-compose exec api python -c "from app.database import Base, engine; Base.metadata.create_all(bind=engine)"
+
+typecheck:
+    @echo "Running typecheck..."
+    @mypy app

@@ -12,3 +12,6 @@ class AppointmentCreate(BaseModel):
 
 class AppointmentRead(AppointmentCreate):
     id: int
+
+    class Config:
+        orm_mode = True  # Для работы with_orm()
