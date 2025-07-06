@@ -21,7 +21,7 @@ def get_database_config() -> tuple[str, str, str, str, str]:
         return (
             cast(str, parsed.username),
             cast(str, parsed.password),
-            cast(str, parsed.path[1:]),
+            cast(str, parsed.path[1:]),  # удаляем "/"
             cast(str, parsed.hostname),
             str(parsed.port) if parsed.port else "5432",
         )
@@ -46,8 +46,10 @@ def get_database_config() -> tuple[str, str, str, str, str]:
 
 DB_USER, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT = get_database_config()
 
-# Формирование DSN с безопасным кодированием пароля
+# Кодирование пароля (на случай спецсимволов)
 encoded_password = quote_plus(DB_PASSWORD)
+
+# Окончательный DSN
 final_db_url: str = (
     f"postgresql://{DB_USER}:{encoded_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     if "pytest" not in sys.modules and not os.getenv("DATABASE_URL")
@@ -58,10 +60,7 @@ engine = create_engine(final_db_url)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Вывод DSN без пароля в логах
-safe_dsn = (
-    final_db_url.replace(DB_PASSWORD, "***")
-    if "DB_PASSWORD" in locals()
-    else final_db_url
-)
-print(f"Используется DSN: {safe_dsn}")
+# Логируем DSN (без пароля) — только вне pytest
+if __name__ == "__main__" or "pytest" not in sys.modules:
+    safe_dsn = final_db_url.replace(DB_PASSWORD, "***")
+    print(f"[DB] Используется DSN: {safe_dsn}")
