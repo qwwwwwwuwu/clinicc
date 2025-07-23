@@ -14,11 +14,9 @@
 
 7 Понятный ридми (уже на ваше усмотрение)
 
-8 После тестов CI собирает и пушит Docker-образ.
+8 Расширенный Makefile: команды make up, make down, make migrate и т. д.
 
-9 Расширенный Makefile: команды make up, make down, make migrate и т. д.
-
-10 mypy 90%
+9 mypy 90%
 
 Микросервис для записи пациентов к врачам.
 
